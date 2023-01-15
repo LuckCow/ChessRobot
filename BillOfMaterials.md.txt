@@ -1,0 +1,11 @@
+Bill of Materials
+
+| Item       | Cost           | Link  |
+| ------------- |-------------:| -----|
+| Hiwonder LeArm 6 DOF Robotic Arm Kit      | 139.99 | https://www.amazon.com/LewanSoul-Robotic-Arduino-Software-Tutorial/dp/B074T6DPKX |
+| Chess Armory Travel Chess set 9.5" x 9.5"      | 15.99      |   https://www.amazon.com/Chess-Armory-Magnetic-Folding-Storage/dp/B07XPNG8P6/ |
+| Rasberry Pi Zero Kit (SD Card, cords case) | 79.99 | https://www.amazon.com/CanaKit-Raspberry-Wireless-Complete-Starter/dp/B07CMVDHWB/ref=sr_1_3?keywords=raspberry+pi+zero&qid=1673733548&sr=8-3 |
+| Rasberry Pi Zero Camera | 23.18 | https://www.amazon.com/Taidacent-Raspberry-Camera-Module-OV5647/dp/B08VGK5B2J/ |
+| Arduino Uno R3 | 17.99 | https://www.amazon.com/ELEGOO-Board-ATmega328P-ATMEGA16U2-Compliant/dp/B01EWOE0UU/ |
+| Jumper Wires | 5.00 | |
+| **Total** | **282.14** | |
