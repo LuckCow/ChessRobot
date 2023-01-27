@@ -9,7 +9,7 @@ LobotServoController myse(mySerial);
 
 
 bool is_connected = false; ///< True if the connection with the master is available
-bool DEBUG = true;
+int16_t x1, y1, z1;
 
 
 void setup() {
@@ -42,28 +42,23 @@ void setup() {
   // move_to_idle();
 
   //coordinate testing
-  // Serial.println("c1 -292, 0, 202");
-  // move_to(-292, 0, -50);
+  Serial.println("c1 -292, 0, 202");
+  move_to(-292, 0, -50);
 
-  // //x and z are inversed
-  // Serial.println("c3 -200, 100, 100");
-  // move_to(-200, 100, 100);
-  // Serial.println("c4 -200, 0, 0");
-  // move_to(-200, 0, 0);
+  //x and z are inversed
+  Serial.println("c3 -200, 100, 100");
+  move_to(-200, 100, 100);
+  Serial.println("c4 -200, 0, 0");
+  move_to(-200, 0, 0);
 
-  // Serial.println("c5 -250, 0, 0");
-  // move_to(-250, 0, 0);
+  Serial.println("c5 -250, 0, 0");
+  move_to(-250, 0, 0);
 
 }
 
 const unsigned int MAX_MESSAGE_LENGTH = 12;
-
-// coordinate array: x1 y1 z1, x2, y2, z2
-float coords[6];
+int coords[3];
 bool move_avail = false;
-
-// Serial buffer is 64 bytes by default
-// Max coord length is 6 chars (example: -234.2)
 
 void loop() {
   
@@ -73,141 +68,58 @@ void loop() {
   // close_gripper();
   
  //Check to see if anything is available in the serial receive buffer
- while (Serial.available() > 0) {  //TODO: remove this at some point
+ while (Serial.available() > 0) {
+    //Create a place to hold the incoming message
+    static char message[MAX_MESSAGE_LENGTH];
+    static unsigned int message_pos = 0;
+    static unsigned int coord_pos = 0;
 
     //Read the next available byte in the serial receive buffer
-    char order = Serial.read();
-
-    switch (order) {
-      case 'a':  // hello
-        Serial.println("Hello World!");
-        break;
-      case 'b':  // move to
-        // read in 3 coordinates (3 coords * 7 bytes/coord = 21)
-        wait_for_bytes(21, 500);
-
-        read_serial_coords();
-
-        if (DEBUG) {
-          Serial.print("Move To Command: ");
-          Serial.print(coords[0]); Serial.print(' ');
-          Serial.print(coords[1]); Serial.print(' ');
-          Serial.print(coords[2]); Serial.print('\n');
-        }
-
-        move_to(coords[0], coords[1], coords[2]);
-
-        break;
-      case 'c':  // move piece
-        // TODO: clean up communication so that it doesn't need to be padded. Raw bytes would be more efficient than strings
-        // read in 6 coordinates (6*7)
-        wait_for_bytes(42, 500);
-
-        read_serial_coords();
-
-        if (DEBUG) {
-          Serial.print("Move Piece Command: ");
-          Serial.print(coords[0]); Serial.print(' ');
-          Serial.print(coords[1]); Serial.print(' ');
-          Serial.print(coords[2]); Serial.print(", ");
-          Serial.print(coords[3]); Serial.print(' ');
-          Serial.print(coords[4]); Serial.print(' ');
-          Serial.print(coords[5]); Serial.print('\n');
-        }
-
-        move_piece(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
-
-        break;
-
-      case 'd':  //open
-        if (DEBUG) {
-          Serial.println("Opening Gripper");
-        }
-        open_gripper();
-        break;
-      case 'e': //close
-        if (DEBUG) {
-          Serial.println("Closing Gripper");
-        }
-        close_gripper();
-        break;
-
-      default:
-        Serial.print("Error: command not known: '");
-        Serial.print(order);Serial.println("'");
-        break;
-    }
-
-    // if (message_pos >= MAX_MESSAGE_LENGTH) {
-    //   Serial.print("Critical serial read error"); 
-    //   break;
-    // }
-      
-    // // check for coord separators or the end
-    // if (inByte == ' ' || inByte == '\n'){
-    //   // add end char for string
-    //   message[message_pos] = '\0';
-
-    //   //add into coord array
-    //   coords[coord_pos] = atoi(message);
-    //   coord_pos += 1;
-
-    //   // mark message as complete for move
-    //   if (coord_pos >= 3){
-    //     move_avail = true;
-    //     coord_pos = 0;
-    //   }
-
-    //   //Reset for the next message
-    //   message_pos = 0;
-    // } 
-    // else {
-    //   //Add the incoming byte to coord string
-    //   message[message_pos] = inByte;
-    //   message_pos++;
-    // }
- }
-
- // move to entered coords
-//  if (move_avail) {
-//    Serial.print("Serial Move xyz: "); 
-//    Serial.print(coords[0]); Serial.print(' ');
-//    Serial.print(coords[1]); Serial.print(' ');
-//    Serial.print(coords[2]); Serial.print('\n');
-//    move_to(coords[0], coords[1], coords[2]);
-//    move_avail = false;
-//  }
- 
-}
-
-void read_serial_coords(){
-  //Create a place to hold the incoming message
-  char message[MAX_MESSAGE_LENGTH];
-  unsigned int message_pos = 0;
-  unsigned int coord_pos = 0;
-
-  // read in bytes and convert to floats
-  while (Serial.available() > 0) {
     char inByte = Serial.read();
+
+    if (message_pos >= MAX_MESSAGE_LENGTH) {
+      Serial.print("Critical serial read error"); 
+      break;
+    }
+      
     // check for coord separators or the end
     if (inByte == ' ' || inByte == '\n'){
       // add end char for string
       message[message_pos] = '\0';
 
       //add into coord array
-      coords[coord_pos] = atof(message);
+      coords[coord_pos] = atoi(message);
       coord_pos += 1;
+
+      // mark message as complete for move
+      if (coord_pos >= 3){
+        move_avail = true;
+        coord_pos = 0;
+      }
 
       //Reset for the next message
       message_pos = 0;
-    }
+    } 
     else {
       //Add the incoming byte to coord string
       message[message_pos] = inByte;
       message_pos++;
     }
-  }
+ }
+
+ // move to entered coords
+ if (move_avail) {
+   Serial.print("Serial Move xyz: "); 
+   Serial.print(coords[0]); Serial.print(' ');
+   Serial.print(coords[1]); Serial.print(' ');
+   Serial.print(coords[2]); Serial.print('\n');
+   move_to(coords[0], coords[1], coords[2]);
+   move_avail = false;
+ }
+ 
 }
+
+
 
 // Quick conversion from radians to the Braccio angle system
 float a2b(float a) {
@@ -263,7 +175,7 @@ void move_piece(float x1, float y1, float z1, float x2, float y2, float z2) {
   //TODO: unload servos
 }
 
-int move_time_ms = 750;
+int move_time_ms = 1500;
 
 void move_to(float x, float y, float z){
 
@@ -277,7 +189,7 @@ void move_to(float x, float y, float z){
   // Calculates the angles without considering a specific approach angle
   // InverseK.solve(x, y, z, a0, a1, a2, a3)
 
-  if(InverseK.solve(x, y, z, a0, a1, a2, a3)) {  //-PI/4
+  if(InverseK.solve(x, y, z, a0, a1, a2, a3, -PI/4)) {  //-PI/4
 
     debug_angles(a0, a1, a2, a3);
 
@@ -317,7 +229,7 @@ void move_to(float x, float y, float z){
   servos[3].ID = 3;
   servos[3].Position = theta3;
   myse.moveServos(servos,4,move_time_ms);  //control 2 servos, action time is 5000ms, ID and position are specified by the structure array "servos"
-  delay(move_time_ms+250);
+  delay(move_time_ms+1000);
   //myse.waitForStopping(10000);
 }
 
@@ -332,107 +244,107 @@ void move_to_idle(){
   servos[3].ID = 3;
   servos[3].Position = 1500;
   myse.moveServos(servos,4,move_time_ms);  //control 2 servos, action time is 5000ms, ID and position are specified by the structure array "servos"
-  delay(move_time_ms+250);
+  delay(move_time_ms+1000);
   //myse.waitForStopping(10000);
 
 }
 
 void open_gripper(){
   // Gripper open
-  myse.moveServo(1,1500,500); //Open Gripper
-  delay(750);
+  myse.moveServo(1,1500,1000); //Open Gripper
+  delay(1500);
   //myse.waitForStopping(10000);
 }
 
 void close_gripper(){
   // Gripper close
-  myse.moveServo(1,2400,500); //Close Gripper
-  delay(750);
+  myse.moveServo(1,2400,1000); //Close Gripper
+  delay(1500);
   //myse.waitForStopping(10000);
 }
 
 
-// // Define the orders that can be sent and received
-// enum Order {
-//   HELLO = 0,
-//   MOVE_TO = 1,
-//   MOVE_PIECE = 2,
-//   ALREADY_CONNECTED = 3,
-//   ERROR = 4,
-//   RECEIVED = 5,
-//   STOP = 6,
-// };
+// Define the orders that can be sent and received
+enum Order {
+  HELLO = 0,
+  MOVE = 1,
+  SPARE = 2,
+  ALREADY_CONNECTED = 3,
+  ERROR = 4,
+  RECEIVED = 5,
+  STOP = 6,
+};
 
-// typedef enum Order Order;
+typedef enum Order Order;
 
-// void get_messages_from_serial()
-// {
-//   if(Serial.available() > 0)
-//   {
-//     // The first byte received is the instruction
-//     Order order_received = read_order();
+void get_messages_from_serial()
+{
+  if(Serial.available() > 0)
+  {
+    // The first byte received is the instruction
+    Order order_received = read_order();
 
-//     if(order_received == HELLO)
-//     {
-//       // If the cards haven't say hello, check the connection
-//       if(!is_connected)
-//       {
-//         is_connected = true;
-//         write_order(HELLO);
-//       }
-//       else
-//       {
-//         // If we are already connected do not send "hello" to avoid infinite loop
-//         write_order(ALREADY_CONNECTED);
-//       }
-//     }
-//     else if(order_received == ALREADY_CONNECTED)
-//     {
-//       is_connected = true;
-//     }
-//     else
-//     {
-//       switch(order_received)
-//       {
-//         case STOP:
-//         {
-//           motor_speed = 0;
-//           stop();
-//           if(DEBUG)
-//           {
-//             write_order(STOP);
-//           }
-//           break;
-//         }
-//         case MOVE:
-//         {
-//           servo_angle = read_i16();
-//           if(DEBUG)
-//           {
-//             write_order(SERVO);
-//             write_i16(servo_angle);
-//           }
-//           break;
-//         }
-//         case SPARE:
-//         {
-//           break;
-//         }
-//   			// Unknown order
-//   			default:
-//           write_order(ERROR);
-//           write_i16(404);
-//   				return;
-//       }
-//     }
-//     write_order(RECEIVED); // Confirm the reception
-//   }
-// }
+    if(order_received == HELLO)
+    {
+      // If the cards haven't say hello, check the connection
+      if(!is_connected)
+      {
+        is_connected = true;
+        write_order(HELLO);
+      }
+      else
+      {
+        // If we are already connected do not send "hello" to avoid infinite loop
+        write_order(ALREADY_CONNECTED);
+      }
+    }
+    else if(order_received == ALREADY_CONNECTED)
+    {
+      is_connected = true;
+    }
+    else
+    {
+      switch(order_received)
+      {
+        case STOP:
+        {
+          motor_speed = 0;
+          stop();
+          if(DEBUG)
+          {
+            write_order(STOP);
+          }
+          break;
+        }
+        case MOVE:
+        {
+          servo_angle = read_i16();
+          if(DEBUG)
+          {
+            write_order(SERVO);
+            write_i16(servo_angle);
+          }
+          break;
+        }
+        case SPARE:
+        {
+          break;
+        }
+  			// Unknown order
+  			default:
+          write_order(ERROR);
+          write_i16(404);
+  				return;
+      }
+    }
+    write_order(RECEIVED); // Confirm the reception
+  }
+}
 
-// Order read_order()
-// {
-// 	return (Order) Serial.read();
-// }
+Order read_order()
+{
+	return (Order) Serial.read();
+}
 
 void wait_for_bytes(int num_bytes, unsigned long timeout)
 {
@@ -457,11 +369,6 @@ void read_signed_bytes(int8_t* buffer, size_t n)
 	}
 }
 
-float read_float()
-{
-  return (float) read_i32();
-}
-
 int8_t read_i8()
 {
 	wait_for_bytes(1, 100); // Wait for 1 byte with a timeout of 100 ms
@@ -484,11 +391,11 @@ int32_t read_i32()
   return (((int32_t) buffer[0]) & 0xff) | (((int32_t) buffer[1]) << 8 & 0xff00) | (((int32_t) buffer[2]) << 16 & 0xff0000) | (((int32_t) buffer[3]) << 24 & 0xff000000);
 }
 
-// void write_order(enum Order myOrder)
-// {
-// 	uint8_t* Order = (uint8_t*) &myOrder;
-//   Serial.write(Order, sizeof(uint8_t));
-// }
+void write_order(enum Order myOrder)
+{
+	uint8_t* Order = (uint8_t*) &myOrder;
+  Serial.write(Order, sizeof(uint8_t));
+}
 
 void write_i8(int8_t num)
 {

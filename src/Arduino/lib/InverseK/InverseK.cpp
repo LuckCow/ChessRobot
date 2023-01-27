@@ -51,7 +51,7 @@ void Link::setAngle(float angle) {
 
 // Initialize Inverse object
 _Inverse::_Inverse() {
-	_currentPhi = -DOUBLE_PI;
+	_currentPhi = DOUBLE_PI;
 }
 
 // Load the links of the mechanism to be solved
@@ -130,7 +130,7 @@ bool _Inverse::_solve(float x, float y, float phi, float& shoulder, float& elbow
 // Solve the angles for XY with a free attack angle
 bool _Inverse::_solve(float x, float y, float& shoulder, float& elbow, float& wrist) {
 	if (_solve(x, y, _currentPhi, shoulder, elbow, wrist)) return true;
-	for (float phi = -DOUBLE_PI; phi < DOUBLE_PI; phi += DEGREE_STEP) {
+	for (float phi = DOUBLE_PI; phi > -DOUBLE_PI; phi -= DEGREE_STEP) {
 		if (_solve(x, y, phi, shoulder, elbow, wrist)) {
 			_currentPhi = phi;
 			return true;
